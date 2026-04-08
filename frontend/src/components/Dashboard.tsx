@@ -59,7 +59,13 @@ export default function Dashboard() {
       }
 
       if (m.type === 'log_message' || m.type === 'step_started' || m.type === 'step_completed' || m.type === 'agent_thinking') {
-        const logEntry = data ? JSON.stringify(data) : String(m.event);
+        const logEntry = data
+          ? (typeof data === 'object'
+              ? (data as Record<string, unknown>).message as string
+                  || (data as Record<string, unknown>).text as string
+                  || JSON.stringify(data)
+              : String(data))
+          : String(m.event);
         setLogs(prev => [...prev.slice(-499), logEntry]);
       }
 

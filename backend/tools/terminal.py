@@ -39,7 +39,12 @@ class TerminalTool:
         # Strip any path prefix
         base_cmd = os.path.basename(first_token)
         if base_cmd and base_cmd not in ALLOWED_COMMANDS:
-            logger.warning(f"Command '{base_cmd}' not in allowed list, proceeding with caution.")
+            # Warn but allow execution — the agent may need arbitrary commands.
+            # Operators can restrict this list via config in production deployments.
+            logger.warning(
+                f"Command '{base_cmd}' is not in the pre-approved list; proceeding with caution. "
+                "Review ALLOWED_COMMANDS in terminal.py to restrict execution."
+            )
         return command
 
     async def execute(

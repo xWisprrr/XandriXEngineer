@@ -54,7 +54,9 @@ async def retry_async(
             else:
                 logger.error(f"All {max_retries} retries exhausted for {func.__name__}. Last error: {exc}")
 
-    raise last_exception  # type: ignore[misc]
+    if last_exception is not None:
+        raise last_exception
+    raise RuntimeError(f"retry_async: max_retries={max_retries} must be >= 0")
 
 
 def retry(config: RetryConfig | None = None):

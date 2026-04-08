@@ -54,6 +54,9 @@ def test_filesystem_create_directory(fs):
     files = fs.list_directory(".")
     names = [f.name for f in files]
     assert "subdir" in names
+    # Verify nested subdirectory was actually created inside subdir
+    subdir_files = fs.list_directory("subdir")
+    assert any(f.name == "nested" for f in subdir_files)
 
 
 @pytest.mark.asyncio

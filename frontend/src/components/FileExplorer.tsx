@@ -53,7 +53,7 @@ export default function FileExplorer({ onFileSelect }: FileExplorerProps) {
     loadFiles('.');
     const interval = setInterval(() => loadFiles(currentPath), 10000);
     return () => clearInterval(interval);
-  }, [loadFiles]);
+  }, [currentPath, loadFiles]);
 
   const handleClick = async (file: FileInfo) => {
     if (file.is_dir) {

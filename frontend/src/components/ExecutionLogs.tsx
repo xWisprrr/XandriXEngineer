@@ -69,7 +69,7 @@ export default function ExecutionLogs({ task, extraLogs }: ExecutionLogsProps) {
     setLines([]);
     getTaskLogs(task.id).then(logs => {
       setLines(logs.map(makeLogLine));
-    }).catch(() => {});
+    }).catch((err) => console.error('Failed to load task logs:', err));
   }, [task?.id]);
 
   // Handle extra logs from WS

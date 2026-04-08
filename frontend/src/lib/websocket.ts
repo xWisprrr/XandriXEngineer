@@ -45,7 +45,11 @@ export class XandriXWebSocket {
   constructor(url?: string) {
     const wsBase = process.env.NEXT_PUBLIC_WS_URL || 'ws://localhost:8000';
     this.url = url || wsBase;
-    this.clientId = `client_${Math.random().toString(36).slice(2, 9)}`;
+    this.clientId = `client_${
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID().replace(/-/g, '').slice(0, 12)
+        : Math.random().toString(36).slice(2, 9)
+    }`;
   }
 
   connect(): void {
