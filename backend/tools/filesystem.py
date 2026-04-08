@@ -28,11 +28,21 @@ class FileSystem:
         self.base_dir = base_dir or Path.cwd()
 
     def resolve(self, path: str) -> Path:
-        """Resolve a path relative to the base directory."""
+        """Resolve a path relative to the base directory, preventing path traversal."""
         p = Path(path)
+        base = self.base_dir.resolve()
         if p.is_absolute():
-            return p
-        return self.base_dir / p
+            resolved = p.resolve()
+        else:
+            resolved = (base / p).resolve()
+        # Enforce that the resolved path is within base_dir to prevent path injection
+        try:
+            resolved.relative_to(base)
+        except ValueError:
+            # Strip traversal components and confine to base_dir
+            safe_parts = [part for part in p.parts if part not in ("..", ".")]
+            resolved = (base / Path(*safe_parts)).resolve() if safe_parts else base
+        return resolved
 
     def read(self, path: str) -> str:
         """Read a file and return its contents."""
