@@ -51,10 +51,10 @@ export class XandriXWebSocket {
   connect(): void {
     if (this.ws?.readyState === WebSocket.OPEN) return;
     this.shouldReconnect = true;
-    this._connect();
+    this.doConnect();
   }
 
-  private _connect(): void {
+  private doConnect(): void {
     try {
       this.ws = new WebSocket(`${this.url}/ws/${this.clientId}`);
 
@@ -78,7 +78,7 @@ export class XandriXWebSocket {
         if (this.shouldReconnect && this.reconnectAttempts < this.maxReconnectAttempts) {
           const delay = Math.min(this.reconnectDelay * Math.pow(1.5, this.reconnectAttempts), this.maxReconnectDelay);
           this.reconnectAttempts++;
-          this.reconnectTimer = setTimeout(() => this._connect(), delay);
+          this.reconnectTimer = setTimeout(() => this.doConnect(), delay);
         }
       };
 
