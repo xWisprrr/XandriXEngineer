@@ -1,0 +1,96 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0a0a0f;
+  --surface: #12121a;
+  --surface-2: #1a1a26;
+  --border: #1e1e2e;
+  --text: #e2e8f0;
+  --text-muted: #475569;
+  --accent: #6366f1;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--surface);
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2a2a40;
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #3a3a5c;
+}
+
+/* Terminal-style elements */
+.terminal {
+  font-family: 'JetBrains Mono', 'Fira Code', monospace;
+  font-size: 0.85rem;
+  line-height: 1.6;
+}
+
+.terminal-green { color: #22c55e; }
+.terminal-yellow { color: #eab308; }
+.terminal-red { color: #ef4444; }
+.terminal-blue { color: #3b82f6; }
+.terminal-cyan { color: #06b6d4; }
+.terminal-purple { color: #a855f7; }
+.terminal-gray { color: #64748b; }
+
+/* Status badges */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.badge-pending { background: rgba(234, 179, 8, 0.15); color: #eab308; }
+.badge-running { background: rgba(99, 102, 241, 0.15); color: #818cf8; }
+.badge-completed { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+.badge-failed { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+.badge-paused { background: rgba(148, 163, 184, 0.15); color: #94a3b8; }
+.badge-cancelled { background: rgba(100, 116, 139, 0.15); color: #64748b; }
+
+/* Pulse animation for active agents */
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2); opacity: 0; }
+}
+
+.pulse-ring::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: currentColor;
+  animation: pulse-ring 1.5s ease-out infinite;
+}
