@@ -5,6 +5,7 @@ from fastapi import FastAPI, Request, WebSocket
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
+from api.routes.chat import router as chat_router
 from api.routes.tasks import router as tasks_router
 from api.routes.agents import router as agents_router
 from api.routes.files import router as files_router
@@ -61,6 +62,7 @@ app.add_middleware(
 )
 
 # Include routers
+app.include_router(chat_router)
 app.include_router(tasks_router)
 app.include_router(agents_router)
 app.include_router(files_router)

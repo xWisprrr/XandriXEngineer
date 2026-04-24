@@ -141,4 +141,61 @@ export const healthCheck = async (): Promise<boolean> => {
   }
 };
 
+// ─── Chat / Conversation API ────────────────────────────────────────────────
+
+export interface ActionItem {
+  type: string;
+  target: string;
+  goal: string;
+}
+
+export interface ChatMessage {
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+}
+
+export interface ChatResponse {
+  intent: 'new_project' | 'modification' | 'clarification';
+  project_id: string;
+  summary: string;
+  task_id?: string;
+  task_title: string;
+  actions: ActionItem[];
+  affected_files: string[];
+  message: string;
+}
+
+export interface ProjectHistory {
+  project_id: string;
+  description: string;
+  tech_stack: string[];
+  files: string[];
+  last_task_id?: string;
+  history: { role: string; content: string }[];
+}
+
+export const sendChatMessage = async (
+  message: string,
+  projectId?: string,
+): Promise<ChatResponse> => {
+  const { data } = await api.post('/api/chat', {
+    message,
+    project_id: projectId ?? null,
+  });
+  return data;
+};
+
+export const getProjectHistory = async (projectId: string): Promise<ProjectHistory> => {
+  const { data } = await api.get(`/api/chat/${projectId}/history`);
+  return data;
+};
+
+export const listProjects = async (): Promise<
+  { project_id: string; description: string; tech_stack: string[]; file_count: number; turns: number }[]
+> => {
+  const { data } = await api.get('/api/chat');
+  return data;
+};
+
 export default api;

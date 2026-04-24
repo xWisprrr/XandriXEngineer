@@ -62,6 +62,10 @@ class AgentOrchestrator:
         else:
             return self.coder
 
+    # Safety limits enforced on every task execution
+    MAX_STEPS: int = 20
+    MAX_DEBUG_RETRIES: int = 1  # STRICT: max 1 retry per failure
+
     async def execute_task(self, task: Task) -> str:
         self._context = {"task_id": task.id, "task_title": task.title}
         task.logs.append(f"[INFO] Starting orchestration for: {task.title}")
@@ -74,7 +78,15 @@ class AgentOrchestrator:
         })
 
         steps = await self.planner.analyze_task(task.description)
-        task.logs.append(f"[INFO] Planner created {len(steps)} steps")
+
+        # SAFETY: cap total steps
+        if len(steps) > self.MAX_STEPS:
+            logger.warning(
+                f"Planner returned {len(steps)} steps; capping at {self.MAX_STEPS}"
+            )
+            steps = steps[: self.MAX_STEPS]
+
+        task.logs.append(f"[INFO] Planner created {len(steps)} steps (max {self.MAX_STEPS})")
 
         # Create TaskStep objects
         task_steps: List[TaskStep] = []
@@ -115,21 +127,39 @@ class AgentOrchestrator:
                 task_step.status = "failed"
                 task_step.error = step_result.error
 
-                # Attempt auto-debug
+                # STRICT: attempt auto-debug with MAX 1 retry per failure
                 if step_result.error:
-                    task.logs.append(f"[DEBUG] Attempting to debug error: {step_result.error[:100]}")
+                    task.logs.append(f"[DEBUG] Attempting to debug: {step_result.error[:100]}")
                     debug_result = await self.debugger.analyze_error(
                         step_result.error,
                         self._context.get("last_code", ""),
                     )
                     task.logs.append(
                         f"[DEBUG] Root cause: {debug_result.root_cause}. "
-                        f"Fix: {debug_result.suggested_fix}"
+                        f"Suggested fix: {debug_result.suggested_fix}"
                     )
+
+                    # One and only one retry attempt
+                    retry_result = await self._execute_step(step, task)
+                    if retry_result.success:
+                        task_step.status = "completed"
+                        task_step.result = retry_result.output[:500] if retry_result.output else "Done (after debug)"
+                        results.append(f"Step {i+1} ({step.name}) [fixed]: {retry_result.output[:200]}")
+                        task.logs.append(f"[OK] {task_step.name} fixed and completed after 1 retry")
+                        task_step.completed_at = datetime.now(timezone.utc)
+                        await event_bus.publish(EventType.STEP_COMPLETED, {
+                            "step": task_step.name,
+                            "step_id": task_step.id,
+                            "task_id": task.id,
+                            "success": True,
+                        })
+                        continue
+
+                    task.logs.append(f"[ERROR] Debug retry also failed: {retry_result.error or 'unknown'}")
 
                 if not step.parameters.get("optional", False):
                     failed = True
-                    task.logs.append(f"[ERROR] Critical step failed: {step.name}")
+                    task.logs.append(f"[ERROR] Critical step failed (no more retries): {step.name}")
                     break
                 else:
                     task.logs.append(f"[WARN] Optional step failed, continuing: {step.name}")
@@ -145,7 +175,10 @@ class AgentOrchestrator:
         if failed:
             raise RuntimeError(f"Task failed at step: {task_steps[task.current_step].name}")
 
-        summary = f"Task completed: {task.title}. Executed {len(results)} steps."
+        summary = (
+            f"Task completed: {task.title}. "
+            f"Executed {len(results)}/{len(steps)} steps successfully."
+        )
         task.logs.append(f"[DONE] {summary}")
         return summary
 
